@@ -1,0 +1,995 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Algorithms, Step by Step</title>
+<style>
+:root{
+  --bg:#f6f5f2; --panel:#fffefc; --panel-2:#efede7; --border:#e3e0d8;
+  --text:#23231f; --muted:#6d6b63; --faint:#9c998f;
+  --accent:#4a63d8; --accent-soft:#e8ebfb; --on-accent:#fff;
+  --bar:#a9b0bd;
+  --cmp:#e0a13a; --swap:#d4614f; --write:#4a8fd8; --pivot:#9265cf; --done:#3fa579;
+  --base:#1c8c86; --ind:#6f5fd0;
+  --shadow:0 1px 2px rgba(0,0,0,.05), 0 8px 24px -12px rgba(0,0,0,.18);
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  --serif:ui-serif,Georgia,"Times New Roman",serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#16171a; --panel:#1d1f23; --panel-2:#25272c; --border:#31343a;
+    --text:#e9e8e4; --muted:#a3a29c; --faint:#75746e;
+    --accent:#8fa2ff; --accent-soft:#252a3f; --on-accent:#14161d;
+    --bar:#565d6b;
+    --cmp:#e2ab55; --swap:#e0705c; --write:#5f9fe0; --pivot:#a97fdb; --done:#4fbb8c;
+    --base:#3fbdb2; --ind:#9c8ff0;
+    --shadow:0 1px 2px rgba(0,0,0,.3), 0 8px 24px -12px rgba(0,0,0,.6);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#16171a; --panel:#1d1f23; --panel-2:#25272c; --border:#31343a;
+  --text:#e9e8e4; --muted:#a3a29c; --faint:#75746e;
+  --accent:#8fa2ff; --accent-soft:#252a3f; --on-accent:#14161d;
+  --bar:#565d6b;
+  --cmp:#e2ab55; --swap:#e0705c; --write:#5f9fe0; --pivot:#a97fdb; --done:#4fbb8c;
+  --base:#3fbdb2; --ind:#9c8ff0;
+  --shadow:0 1px 2px rgba(0,0,0,.3), 0 8px 24px -12px rgba(0,0,0,.6);
+}
+*{box-sizing:border-box}
+body{
+  margin:0; background:var(--bg); color:var(--text);
+  font:15px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:1220px; margin:0 auto; padding:28px 20px 64px}
+
+header.top{display:flex; align-items:baseline; gap:14px; flex-wrap:wrap; margin-bottom:22px}
+header.top h1{font-family:var(--serif); font-size:26px; font-weight:600; letter-spacing:-.01em; margin:0}
+header.top p{margin:0; color:var(--muted); font-size:14px}
+#themeBtn{margin-left:auto}
+
+.layout{display:grid; grid-template-columns:216px minmax(0,1fr); gap:22px; align-items:start}
+@media (max-width:900px){ .layout{grid-template-columns:1fr} }
+
+nav#algoNav{display:flex; flex-direction:column; gap:4px; position:sticky; top:16px}
+@media (max-width:900px){ nav#algoNav{position:static; flex-direction:row; flex-wrap:wrap} }
+nav#algoNav button{
+  text-align:left; background:transparent; border:1px solid transparent; color:var(--muted);
+  padding:8px 11px; border-radius:8px; cursor:pointer; font:inherit; font-size:14px;
+  display:flex; justify-content:space-between; gap:10px; align-items:center; width:100%;
+}
+@media (max-width:900px){ nav#algoNav button{width:auto} }
+nav#algoNav button:hover{background:var(--panel-2); color:var(--text)}
+nav#algoNav button[aria-current="true"]{
+  background:var(--accent-soft); border-color:color-mix(in srgb, var(--accent) 35%, transparent);
+  color:var(--text); font-weight:550;
+}
+nav#algoNav .big-o{font-family:var(--mono); font-size:11px; color:var(--faint); white-space:nowrap}
+nav#algoNav .grp{flex-basis:100%; font-size:10.5px; text-transform:uppercase; letter-spacing:.09em;
+  color:var(--faint); font-weight:600; padding:0 11px; margin:12px 0 3px}
+nav#algoNav .grp:first-child{margin-top:0}
+
+.card{background:var(--panel); border:1px solid var(--border); border-radius:14px; box-shadow:var(--shadow)}
+section.explain{padding:20px 22px; margin-bottom:20px}
+section.explain h2{font-family:var(--serif); font-size:22px; margin:0 0 6px; font-weight:600}
+section.explain .blurb{margin:0 0 4px; font-size:15.5px; max-width:64ch}
+.analogy{margin:10px 0 0; padding:10px 13px; background:var(--panel-2); border-radius:9px;
+  font-size:14px; color:var(--muted); max-width:72ch}
+.analogy b{color:var(--text); font-weight:600}
+.cols{display:grid; grid-template-columns:minmax(0,1.35fr) minmax(0,1fr); gap:24px; margin-top:18px}
+@media (max-width:700px){ .cols{grid-template-columns:1fr; gap:18px} }
+h3.mini{font-size:11px; text-transform:uppercase; letter-spacing:.09em; color:var(--faint);
+  margin:0 0 8px; font-weight:600}
+ol.steps{margin:0; padding-left:18px; font-size:14px; color:var(--muted)}
+ol.steps li{margin-bottom:5px} ol.steps li:last-child{margin-bottom:0}
+ol.steps b{color:var(--text); font-weight:600}
+table.cx{width:100%; border-collapse:collapse; font-size:13.5px}
+table.cx td{padding:5px 0; border-bottom:1px dashed var(--border)}
+table.cx tr:last-child td{border-bottom:none}
+table.cx td:first-child{color:var(--muted)}
+table.cx td:last-child{text-align:right; font-family:var(--mono); font-size:12.5px}
+.info{
+  position:relative; display:inline-grid; place-items:center; width:15px; height:15px;
+  margin-left:7px; vertical-align:-2px; border-radius:50%; border:1px solid var(--faint);
+  color:var(--faint); font:italic 600 10px/1 var(--serif); cursor:help;
+}
+.info:hover, .info:focus{border-color:var(--accent); color:var(--accent); outline:none}
+.info .tip{
+  visibility:hidden; opacity:0; transition:opacity .12s ease;
+  position:absolute; right:-4px; bottom:calc(100% + 9px); z-index:9;
+  width:305px; max-width:64vw; padding:11px 13px; text-align:left;
+  background:var(--panel); color:var(--text); border:1px solid var(--border);
+  border-radius:9px; box-shadow:var(--shadow);
+  font:400 13px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+}
+.info:hover .tip, .info:focus .tip{visibility:visible; opacity:1}
+.info .tip .lead{display:block; color:var(--muted); font-size:11.5px; margin-bottom:6px;
+  padding-bottom:6px; border-bottom:1px solid var(--border)}
+.info .tip code{font-family:var(--mono); font-size:12px; background:var(--panel-2);
+  padding:1px 4px; border-radius:4px}
+
+/* ---- visualiser ---- */
+section.viz{padding:16px 18px 18px}
+.toolbar{display:flex; flex-wrap:wrap; gap:8px 14px; align-items:center; margin-bottom:14px;
+  padding-bottom:14px; border-bottom:1px solid var(--border)}
+.field{display:flex; align-items:center; gap:7px; font-size:12.5px; color:var(--muted)}
+input[type=range]{accent-color:var(--accent); height:18px}
+#sizeRange{width:96px}
+select,input[type=text],input[type=number]{
+  font:inherit; font-size:13px; color:var(--text); background:var(--panel-2);
+  border:1px solid var(--border); border-radius:7px; padding:4px 8px;
+}
+input[type=text]{width:132px; font-family:var(--mono); font-size:12px}
+input[type=number]{width:66px; font-family:var(--mono); font-size:12.5px}
+[hidden]{display:none !important}
+button.btn{
+  font:inherit; font-size:13px; color:var(--text); background:var(--panel-2);
+  border:1px solid var(--border); border-radius:8px; padding:5px 11px; cursor:pointer;
+}
+button.btn:hover{border-color:var(--faint)}
+button.btn:disabled{opacity:.38; cursor:default}
+button.btn:disabled:hover{border-color:var(--border)}
+
+.split{display:grid; grid-template-columns:minmax(0,1fr) 392px; gap:16px; align-items:stretch}
+.split .vizcol{display:flex; flex-direction:column; min-width:0}
+.codepanel{align-self:start}
+@media (max-width:960px){ .split{grid-template-columns:1fr} }
+
+.stage{
+  flex:1 1 auto; min-height:296px; max-height:520px;
+  display:flex; align-items:flex-end; gap:2px; padding:18px 2px 0;
+  background:linear-gradient(to top, var(--panel-2), transparent 62%);
+  border-radius:9px; overflow:hidden;
+}
+.bar{flex:1 1 0; min-width:3px; position:relative; border-radius:3px 3px 0 0;
+  background:var(--bar); transition:height .16s ease, background-color .16s ease, opacity .16s ease;
+  display:flex; align-items:flex-start; justify-content:center;}
+.bar .val{position:absolute; bottom:100%; margin-bottom:3px; font-family:var(--mono);
+  font-size:10px; color:var(--faint)}
+.bar.dim{opacity:.28}
+.bar.cmp{background:var(--cmp)} .bar.cmp .val{color:var(--cmp)}
+.bar.swap{background:var(--swap)} .bar.swap .val{color:var(--swap)}
+.bar.write{background:var(--write)} .bar.write .val{color:var(--write)}
+.bar.pivot{background:var(--pivot)} .bar.pivot .val{color:var(--pivot)}
+.bar.done{background:var(--done)} .bar.done .val{color:var(--done)}
+
+/* the narration — deliberately large, it is the thing you read while it plays */
+.note{
+  margin:14px 0 0; padding:13px 16px; border-radius:10px; background:var(--panel-2);
+  min-height:76px; display:flex; gap:13px; align-items:flex-start;
+}
+.note .step-n{font-family:var(--mono); font-size:12.5px; color:var(--faint);
+  white-space:nowrap; padding-top:3px; font-variant-numeric:tabular-nums}
+.note .txt{font-size:17px; line-height:1.45}
+
+/* pseudocode, highlighted line by line as it runs */
+.codepanel{border:1px solid var(--border); border-radius:10px; overflow:hidden; background:var(--panel-2)}
+.codepanel .head{display:flex; align-items:center; justify-content:space-between; gap:8px;
+  padding:7px 12px; border-bottom:1px solid var(--border);
+  font-size:11px; text-transform:uppercase; letter-spacing:.09em; color:var(--faint); font-weight:600}
+#codeBox{position:relative; max-height:378px; overflow:auto; padding:8px 0; font-family:var(--mono);
+  font-size:12.5px; line-height:1.75}
+.cl{padding:0 12px 0 10px; border-left:3px solid transparent; white-space:pre; color:var(--muted)}
+.cl.on{background:var(--accent-soft); color:var(--text); font-weight:600}
+.cl.base{border-left-color:var(--base)}
+.cl.ind{border-left-color:var(--ind)}
+.cl .cmt{color:var(--faint); font-style:italic}
+.cl .cmt.base{color:var(--base); font-style:normal; font-weight:600}
+.cl .cmt.ind{color:var(--ind); font-style:normal; font-weight:600}
+
+.transport{display:flex; align-items:center; gap:8px; margin-top:14px; flex-wrap:wrap}
+.transport button{width:38px; height:34px; display:grid; place-items:center; padding:0;
+  font-size:13px; font-family:var(--mono);}
+.transport button.play{width:88px; font-family:inherit; font-size:13.5px; background:var(--accent);
+  border-color:var(--accent); color:var(--on-accent); font-weight:550}
+.transport button.play:hover{filter:brightness(1.07)}
+#scrub{flex:1 1 160px; min-width:120px}
+
+.footrow{display:flex; flex-wrap:wrap; gap:8px 20px; align-items:center; margin-top:13px;
+  padding-top:12px; border-top:1px solid var(--border); font-size:12.5px; color:var(--muted)}
+.legend{display:flex; gap:12px; flex-wrap:wrap; margin-left:auto}
+.legend span{display:flex; align-items:center; gap:5px}
+.dot{width:9px; height:9px; border-radius:2px; display:inline-block}
+.kbd{font-family:var(--mono); font-size:11px; background:var(--panel-2); border:1px solid var(--border);
+  border-radius:4px; padding:1px 5px}
+.stat b{color:var(--text); font-family:var(--mono); font-variant-numeric:tabular-nums}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <h1>Algorithms, step by step</h1>
+    <p>Five sorting algorithms and binary search — walk through every move, forwards or backwards.</p>
+    <button class="btn" id="themeBtn">Dark</button>
+  </header>
+
+  <div class="layout">
+    <nav id="algoNav" aria-label="Algorithms"></nav>
+
+    <main>
+      <section class="card explain">
+        <h2 id="algoName"></h2>
+        <p class="blurb" id="algoBlurb"></p>
+        <p class="analogy" id="algoAnalogy"></p>
+        <div class="cols">
+          <div>
+            <h3 class="mini">How it works</h3>
+            <ol class="steps" id="algoSteps"></ol>
+          </div>
+          <div>
+            <h3 class="mini">What it costs</h3>
+            <table class="cx"><tbody id="algoCx"></tbody></table>
+          </div>
+        </div>
+      </section>
+
+      <section class="card viz">
+        <div class="toolbar">
+          <div class="field">
+            <label for="sizeRange">Size</label>
+            <input type="range" id="sizeRange" min="5" max="60" value="16">
+            <span id="sizeOut" style="font-family:var(--mono)">16</span>
+          </div>
+          <div class="field">
+            <label for="presetSel">Data</label>
+            <select id="presetSel">
+              <option value="random">Random</option>
+              <option value="nearly">Nearly sorted</option>
+              <option value="reversed">Reversed</option>
+              <option value="few">Few unique</option>
+            </select>
+          </div>
+          <button class="btn" id="newBtn">New array</button>
+          <div class="field" id="targetField" hidden>
+            <label for="targetIn">Find</label>
+            <input type="number" id="targetIn" min="1" max="999"
+                   title="Type a value that is not in the list to watch a search fail">
+            <button class="btn" id="randTargetBtn" title="Pick a value that is in the list">Random</button>
+          </div>
+          <div class="field" style="margin-left:auto">
+            <label for="customIn">Your own</label>
+            <input type="text" id="customIn" placeholder="5, 3, 9, 1, 7" aria-label="Custom numbers">
+            <button class="btn" id="useBtn">Use</button>
+          </div>
+        </div>
+
+        <div class="split">
+          <div class="vizcol">
+            <div class="stage" id="stage"></div>
+            <div class="note">
+              <span class="step-n" id="stepN">0 / 0</span>
+              <span class="txt" id="note"></span>
+            </div>
+          </div>
+          <div class="codepanel">
+            <div class="head"><span>Pseudocode</span><span id="codeWhere"></span></div>
+            <div id="codeBox"></div>
+          </div>
+        </div>
+
+        <div class="transport">
+          <button class="btn" id="firstBtn" title="Back to start">|◀</button>
+          <button class="btn" id="prevBtn" title="Step back (←)">◀</button>
+          <button class="btn play" id="playBtn">Play</button>
+          <button class="btn" id="nextBtn" title="Step forward (→)">▶</button>
+          <button class="btn" id="lastBtn" title="Jump to end">▶|</button>
+          <input type="range" id="scrub" min="0" max="0" value="0" aria-label="Scrub through steps">
+          <div class="field">
+            <label for="speedSel">Speed</label>
+            <select id="speedSel">
+              <option value="2200">Very slow</option>
+              <option value="1100" selected>Slow</option>
+              <option value="550">Normal</option>
+              <option value="200">Fast</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="footrow">
+          <span class="stat">Comparisons <b id="statCmp">0</b></span>
+          <span class="stat">Moves <b id="statMov">0</b></span>
+          <span><span class="kbd">←</span> <span class="kbd">→</span> step · <span class="kbd">space</span> play</span>
+          <div class="legend">
+            <span><i class="dot" style="background:var(--cmp)"></i>comparing</span>
+            <span><i class="dot" style="background:var(--swap)"></i>swapping</span>
+            <span><i class="dot" style="background:var(--write)"></i>writing</span>
+            <span><i class="dot" style="background:var(--pivot)"></i>pivot / key</span>
+            <span><i class="dot" style="background:var(--done)"></i>final place / found</span>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+</div>
+
+<script>
+/* =========================================================================
+   1. Frame recorder
+   Each algorithm runs to completion up front and records a snapshot ("frame")
+   after every meaningful action, including which pseudocode line caused it.
+   Stepping backwards is then just moving an index down the list.
+   ========================================================================= */
+function recorder(input){
+  const a = input.slice();
+  const frames = [];
+  const sorted = new Set();
+  const tally = { comparisons:0, moves:0 };
+  function push(line, note, m){
+    m = m || {};
+    frames.push({
+      a: a.slice(),
+      line: (line === undefined) ? null : line,
+      note,
+      sorted: Array.from(sorted),
+      cmp: m.cmp || null,
+      swap: m.swap || null,
+      write: (m.write === undefined) ? null : m.write,
+      pivot: (m.pivot === undefined) ? null : m.pivot,
+      range: m.range || null,
+      comparisons: tally.comparisons,
+      moves: tally.moves
+    });
+  }
+  function finish(){
+    for (let i = 0; i < a.length; i++) sorted.add(i);
+    push(null, 'Done — every value is in its final place.');
+    return frames;
+  }
+  return { a, frames, sorted, tally, push, finish };
+}
+
+/* =========================================================================
+   2. The algorithms.  `code` is an array of pseudocode lines; the number
+      passed to push() is the index of the line being executed.
+   ========================================================================= */
+const ALGOS = [
+{
+  id:'selection', name:'Selection sort', big:'O(n²)', group:'Sorting',
+  blurb:'Scan the unsorted part of the list for the smallest value, then swap it into the first unsorted slot. Repeat, moving the boundary one slot to the right each time.',
+  analogy:'<b>Like:</b> picking books off a messy pile one at a time — always take the shortest one left and put it next in the row. It never makes more than one swap per round, which matters when moving things is expensive.',
+  steps:[
+    'Look at the whole <b>unsorted</b> part of the list.',
+    'Scan it once and remember where the <b>smallest</b> value sits.',
+    '<b>Swap</b> that smallest value into the first unsorted slot.',
+    'That slot is now final — move the boundary one to the right.',
+    'Repeat until only one value is left over.'
+  ],
+  cx:{'Best':'O(n²)','Average':'O(n²)','Worst':'O(n²)','Swaps':'O(n) — very few','Extra memory':'O(1)','Stable':'No'},
+  stableWhy:'A long-range swap can throw one of an equal pair past the other. Take [3ᵃ, 3ᵇ, 1]: round 1 finds the 1 and swaps it with slot 1, giving [1, 3ᵇ, 3ᵃ]. The 3 that started first now ends last.',
+  cases:{
+    base:[1, 8], ind:[2, 3, 4, 5, 6, 7],
+    baseName:'Initialisation / termination', indName:'Maintenance'
+  },
+  code:[
+    'selectionSort(a):',
+    '    for i = 0 to n-2:  <span class="cmt base"># initialisation: i = 0</span>',
+    '        min = i  <span class="cmt ind"># maintenance ↓</span>',
+    '        for j = i+1 to n-1:',
+    '            if a[j] < a[min]:',
+    '                min = j',
+    '        if min != i:',
+    '            swap(a[i], a[min])',
+    '    <span class="cmt base"># termination: i = n-1, sorted</span>'
+  ],
+  run(input){
+    const r = recorder(input), a = r.a, n = a.length;
+    r.push(0, 'Each round we hunt down the smallest value that is left and put it in place.');
+    for (let i = 0; i < n - 1; i++){
+      let min = i;
+      r.push(2, `Round ${i+1}: assume ${a[i]} is the smallest of what is left.`, {pivot:i, range:[i, n-1]});
+      for (let j = i + 1; j < n; j++){
+        r.tally.comparisons++;
+        r.push(4, `Is ${a[j]} smaller than the smallest so far, ${a[min]}?`, {cmp:[min, j], pivot:min, range:[i, n-1]});
+        if (a[j] < a[min]){
+          min = j;
+          r.push(5, `Yes — ${a[j]} is the new smallest so far.`, {pivot:min, range:[i, n-1]});
+        }
+      }
+      if (min !== i){
+        const t = a[i]; a[i] = a[min]; a[min] = t; r.tally.moves++;
+        r.push(7, `The smallest was ${a[i]} — swap it into slot ${i+1}.`, {swap:[i, min], range:[i, n-1]});
+      } else {
+        r.push(6, `${a[i]} was already the smallest, so nothing needs to move.`, {range:[i, n-1]});
+      }
+      r.sorted.add(i);
+    }
+    return r.finish();
+  }
+},
+{
+  id:'bubble', name:'Bubble sort', big:'O(n²)', group:'Sorting',
+  blurb:'Walk along the list comparing each pair of neighbours and swap them whenever they are the wrong way round. Repeat until a whole pass makes no swaps at all.',
+  analogy:'<b>Like:</b> nudging the heaviest item to the right end of a shelf, one bump at a time. After each full sweep, one more value is guaranteed to be parked at the end.',
+  steps:[
+    'Compare the <b>first two</b> values.',
+    'If the left one is bigger, <b>swap</b> them.',
+    'Move one slot right and repeat to the end of the list.',
+    'That pass parks the <b>largest remaining value</b> at the end, so the next pass can stop one slot earlier.',
+    'If a whole pass makes <b>no swaps</b>, the list is already sorted — stop early.'
+  ],
+  cx:{'Best':'O(n) — already sorted','Average':'O(n²)','Worst':'O(n²)','Extra memory':'O(1)','Stable':'Yes'},
+  stableWhy:'It only ever swaps <i>neighbours</i>, and only when the left one is strictly bigger (<code>&gt;</code>, not <code>≥</code>). Two equal values are therefore never swapped past each other, so their original order survives.',
+  cases:{
+    base:[1, 9], ind:[2, 3, 4, 5, 6],
+    baseName:'Initialisation / termination', indName:'Maintenance'
+  },
+  code:[
+    'bubbleSort(a):',
+    '    for i = 0 to n-2:  <span class="cmt base"># initialisation: i = 0</span>',
+    '        swapped = false  <span class="cmt ind"># maintenance ↓</span>',
+    '        for j = 0 to n-2-i:',
+    '            if a[j] > a[j+1]:',
+    '                swap(a[j], a[j+1])',
+    '                swapped = true',
+    '        if not swapped:',
+    '            break        <span class="cmt"># all sorted</span>',
+    '    <span class="cmt base"># termination: list is sorted</span>'
+  ],
+  run(input){
+    const r = recorder(input), a = r.a, n = a.length;
+    r.push(0, 'We compare neighbours and swap the ones that are out of order.');
+    for (let i = 0; i < n - 1; i++){
+      let swapped = false;
+      for (let j = 0; j < n - 1 - i; j++){
+        r.tally.comparisons++;
+        r.push(4, `Is ${a[j]} bigger than ${a[j+1]}?`, {cmp:[j, j+1]});
+        if (a[j] > a[j+1]){
+          const t = a[j]; a[j] = a[j+1]; a[j+1] = t;
+          r.tally.moves++; swapped = true;
+          r.push(5, `Yes — swap them so the bigger value moves right.`, {swap:[j, j+1]});
+        }
+      }
+      r.sorted.add(n - 1 - i);
+      r.push(3, `End of pass ${i+1}. ${a[n-1-i]} was the biggest of what was left, so it is now in its final place.`);
+      if (!swapped){
+        for (let k = 0; k <= n - 2 - i; k++) r.sorted.add(k);
+        r.push(8, 'That pass made no swaps at all, which means everything is already in order — stop early.');
+        break;
+      }
+    }
+    return r.finish();
+  }
+},
+{
+  id:'merge', name:'Merge sort', big:'O(n log n)', group:'Sorting',
+  blurb:'Split the list in half, sort each half the same way, then zip the two sorted halves back together. The splitting is trivial; all the real work happens in the merge.',
+  analogy:'<b>Like:</b> merging two already-sorted stacks of paper. You look at the top sheet of each and take the smaller one — no searching needed, because each stack is already in order.',
+  steps:[
+    '<b>Split</b> the list down the middle.',
+    'Sort the left half the same way, then the right half. A single value is sorted by definition, so the recursion bottoms out.',
+    'Now <b>merge</b>: look at the front value of each half.',
+    'Take the <b>smaller</b> of the two, write it into the output, and advance that half.',
+    'When one half runs out, copy the rest of the other one straight over.'
+  ],
+  cx:{'Best':'O(n log n)','Average':'O(n log n)','Worst':'O(n log n)','Extra memory':'O(n) — needs a copy','Stable':'Yes'},
+  stableWhy:'Yes, but it hangs on one detail: when the two halves hold equal values, the merge takes from the <b>left</b> half first (the <code>else</code> branch, reached when <code>aux[i] ≤ aux[j]</code>). The left half holds the values that came first. Flip that test to take from the right on a tie and merge sort stops being stable.',
+  cases:{
+    base:[1], ind:[2,3,4,5],
+    baseName:'Base case', indName:'Inductive step'
+  },
+  code:[
+    'sort(lo, hi):',
+    '    if lo >= hi: return  <span class="cmt base"># base case</span>',
+    '    mid = (lo + hi) / 2  <span class="cmt ind"># inductive step ↓</span>',
+    '    sort(lo, mid)',
+    '    sort(mid+1, hi)',
+    '    merge(lo, mid, hi)',
+    '',
+    'merge(lo, mid, hi):',
+    '    copy a[lo..hi] into aux',
+    '    i = lo;  j = mid+1',
+    '    for k = lo to hi:',
+    '        if i > mid:',
+    '            a[k] = aux[j++]  <span class="cmt"># left empty</span>',
+    '        else if j > hi:',
+    '            a[k] = aux[i++]  <span class="cmt"># right empty</span>',
+    '        else if aux[j] < aux[i]:',
+    '            a[k] = aux[j++]  <span class="cmt"># from right</span>',
+    '        else:',
+    '            a[k] = aux[i++]  <span class="cmt"># from left</span>'
+  ],
+  run(input){
+    const r = recorder(input), a = r.a, n = a.length;
+    const aux = a.slice();
+    r.push(0, 'We split the list down to single values, then merge sorted pieces back together.');
+    function sort(lo, hi){
+      if (lo >= hi){
+        if (lo === hi) r.push(1, `Slots of one value are sorted already, so ${a[lo]} needs no work.`, {range:[lo, hi]});
+        return;
+      }
+      const mid = (lo + hi) >> 1;
+      r.push(2, `Split slots ${lo+1}–${hi+1} into two halves, and sort each half first.`, {range:[lo, hi]});
+      sort(lo, mid);
+      sort(mid + 1, hi);
+      for (let k = lo; k <= hi; k++) aux[k] = a[k];
+      r.push(8, `Both halves are sorted now. Merge ${lo+1}–${mid+1} with ${mid+2}–${hi+1}.`, {range:[lo, hi]});
+      let i = lo, j = mid + 1;
+      for (let k = lo; k <= hi; k++){
+        let note, line;
+        if (i > mid){ line = 12; note = `The left half is used up — take ${aux[j]} from the right.`; a[k] = aux[j++]; }
+        else if (j > hi){ line = 14; note = `The right half is used up — take ${aux[i]} from the left.`; a[k] = aux[i++]; }
+        else {
+          r.tally.comparisons++;
+          if (aux[j] < aux[i]){ line = 16; note = `${aux[j]} < ${aux[i]}, so take ${aux[j]} from the right half.`; a[k] = aux[j++]; }
+          else { line = 18; note = `${aux[i]} ≤ ${aux[j]}, so take ${aux[i]} from the left half.`; a[k] = aux[i++]; }
+        }
+        r.tally.moves++;
+        r.push(line, note, {range:[lo, hi], write:k});
+      }
+      if (lo === 0 && hi === n - 1) for (let k = 0; k < n; k++) r.sorted.add(k);
+    }
+    sort(0, n - 1);
+    return r.finish();
+  }
+},
+{
+  id:'quick', name:'Quicksort', big:'O(n log n)', group:'Sorting',
+  blurb:'Pick one value as the pivot and shuffle everything smaller to its left and everything bigger to its right. The pivot is then in its final place, and the same trick is applied to each side.',
+  analogy:'<b>Like:</b> splitting a crowd by height around one person — shorter to the left, taller to the right. That person is now standing exactly where they belong, and you repeat inside each group.',
+  steps:[
+    'Choose a <b>pivot</b> — here, the last value in the range.',
+    'Walk through the range keeping a boundary <i>i</i> for the "smaller than pivot" group.',
+    'Every value <b>smaller</b> than the pivot is swapped into that group and the boundary moves right.',
+    'Finally swap the pivot into the gap between the two groups — it is now in its <b>final place</b>.',
+    'Repeat on the left group and on the right group.'
+  ],
+  cx:{'Best':'O(n log n)','Average':'O(n log n)','Worst':'O(n²) — sorted input','Extra memory':'O(log n) — call stack','Stable':'No'},
+  stableWhy:'Partitioning swaps values across long distances, so one value can jump over an equal one. Take [2ᵃ, 2ᵇ, 1] with pivot 1: nothing is smaller than the pivot, so the final swap exchanges slots 1 and 3 and gives [1, 2ᵇ, 2ᵃ].',
+  cases:{
+    base:[1], ind:[2,3,4],
+    baseName:'Base case', indName:'Inductive step'
+  },
+  code:[
+    'quicksort(lo, hi):',
+    '    if lo >= hi: return  <span class="cmt base"># base case</span>',
+    '    p = partition(lo, hi)  <span class="cmt ind"># inductive step ↓</span>',
+    '    quicksort(lo, p-1)',
+    '    quicksort(p+1, hi)',
+    '',
+    'partition(lo, hi):',
+    '    pivot = a[hi]          <span class="cmt"># last value</span>',
+    '    i = lo',
+    '    for j = lo to hi-1:',
+    '        if a[j] < pivot:',
+    '            swap(a[i], a[j])',
+    '            i = i + 1',
+    '    swap(a[i], a[hi])      <span class="cmt"># pivot home</span>',
+    '    return i'
+  ],
+  run(input){ return quickRun(input, false); }
+},
+{
+  id:'rquick', name:'Randomised quicksort', big:'O(n log n)', group:'Sorting',
+  blurb:'Exactly quicksort, except the pivot is picked at random instead of always taking the last value. That one change makes the O(n²) worst case a matter of bad luck rather than bad input.',
+  analogy:'<b>Why bother:</b> plain quicksort takes the last value as pivot, so an <i>already sorted</i> list gives it the worst possible split every single time — n² work. No arrangement of the input can force that on the randomised version; an adversary would have to guess your coin flips.',
+  steps:[
+    'Pick a slot in the range <b>at random</b>.',
+    '<b>Swap</b> that value to the end, so the rest of the code is unchanged.',
+    'Partition exactly as before: smaller values to the left, bigger to the right.',
+    'Swap the pivot into the gap — it is in its <b>final place</b>.',
+    'Repeat on both sides. Expected cost is O(n log n) <i>whatever</i> the input looks like.',
+    'Try it: set Data to "Reversed", then compare the comparison count against plain quicksort.'
+  ],
+  cx:{'Best':'O(n log n)','Expected':'O(n log n) — any input','Worst':'O(n²) — very unlikely','Extra memory':'O(log n) — call stack','Stable':'No'},
+  stableWhy:'No, for the same reason as plain quicksort — partitioning moves values across long distances, so equal values can be reordered. The extra random-pivot swap only adds to that.',
+  cases:{
+    base:[1], ind:[2,3,4],
+    baseName:'Base case', indName:'Inductive step'
+  },
+  code:[
+    'quicksort(lo, hi):',
+    '    if lo >= hi: return  <span class="cmt base"># base case</span>',
+    '    p = partition(lo, hi)  <span class="cmt ind"># inductive step ↓</span>',
+    '    quicksort(lo, p-1)',
+    '    quicksort(p+1, hi)',
+    '',
+    'partition(lo, hi):',
+    '    r = random(lo, hi)     <span class="cmt"># any slot</span>',
+    '    swap(a[r], a[hi])      <span class="cmt"># to the end</span>',
+    '    pivot = a[hi]',
+    '    i = lo',
+    '    for j = lo to hi-1:',
+    '        if a[j] < pivot:',
+    '            swap(a[i], a[j])',
+    '            i = i + 1',
+    '    swap(a[i], a[hi])',
+    '    return i'
+  ],
+  run(input){ return quickRun(input, true); }
+},
+{
+  id:'binary', name:'Binary search', big:'O(log n)', group:'Searching',
+  needsTarget:true, needsSorted:true,
+  blurb:'Not a sort — this is how you find a value in a list that is already sorted, and it is the reason sorting is worth the trouble. Look at the middle value: if it is too small, throw away the entire left half; if it is too big, throw away the right half. Every single comparison halves what is left.',
+  analogy:'<b>Like:</b> guessing a number between 1 and 100. You guess 50, and "too low" wipes out half the possibilities in one go. Seven guesses cover 100 numbers; twenty cover a million. Checking one by one would take 500,000.',
+  steps:[
+    'Keep two markers, <b>lo</b> and <b>hi</b>, around the part still worth searching. It starts as the whole list.',
+    'Look at the value in the <b>middle</b> of that range.',
+    'If it <b>is</b> the target — done.',
+    'If it is <b>too small</b>, the target can only be to the right, so move <b>lo</b> to just past the middle.',
+    'If it is <b>too big</b>, move <b>hi</b> to just before the middle.',
+    'When lo passes hi, nothing is left to look at — the value is <b>not in the list</b>.',
+    'Type a value that is not there to watch a search fail, and count how few steps that still takes.'
+  ],
+  cx:{'Best':'O(1) — lucky first guess','Average':'O(log n)','Worst':'O(log n)','1,000,000 items':'≤ 20 comparisons','Extra memory':'O(1)','Requires':'a sorted list'},
+  cases:{
+    base:[1, 5, 10], ind:[6, 7, 8, 9],
+    baseName:'Initialisation / termination', indName:'Maintenance'
+  },
+  code:[
+    'binarySearch(a, target):',
+    '    lo = 0;  hi = n-1  <span class="cmt base"># initialisation</span>',
+    '    while lo <= hi:',
+    '        mid = (lo + hi) / 2',
+    '        if a[mid] == target:',
+    '            return mid  <span class="cmt base"># termination: hit</span>',
+    '        else if a[mid] < target:',
+    '            lo = mid + 1  <span class="cmt ind"># maintenance</span>',
+    '        else:',
+    '            hi = mid - 1  <span class="cmt ind"># maintenance</span>',
+    '    return NOT_FOUND  <span class="cmt base"># termination: miss</span>'
+  ],
+  run(input, target){
+    const r = recorder(input), a = r.a, n = a.length;
+    r.push(0, `Binary search needs a sorted list, so the values below have been sorted. We are looking for ${target}.`);
+    let lo = 0, hi = n - 1;
+    r.push(1, `Start with the whole list in play: slots 1–${n}.`, {range:[lo, hi]});
+    while (lo <= hi){
+      const mid = (lo + hi) >> 1;
+      r.push(3, `The middle of slots ${lo+1}–${hi+1} is slot ${mid+1}, which holds ${a[mid]}.`,
+        {range:[lo, hi], pivot:mid});
+      r.tally.comparisons++;
+      if (a[mid] === target){
+        r.sorted.add(mid);
+        r.push(5, `${a[mid]} is exactly what we wanted — found it in slot ${mid+1}, after ${r.tally.comparisons} comparison${r.tally.comparisons===1?'':'s'}.`,
+          {range:[lo, hi]});
+        return r.frames;
+      }
+      if (a[mid] < target){
+        r.push(6, `${a[mid]} is smaller than ${target}, so the target can only be further right. Throw away slots ${lo+1}–${mid+1}.`,
+          {range:[lo, hi], cmp:[mid, mid]});
+        lo = mid + 1;
+        r.push(7, lo <= hi ? `Search on in slots ${lo+1}–${hi+1} — half the list just disappeared.`
+                           : `Nothing left to search.`, {range:[lo, hi]});
+      } else {
+        r.push(8, `${a[mid]} is bigger than ${target}, so the target can only be further left. Throw away slots ${mid+1}–${hi+1}.`,
+          {range:[lo, hi], cmp:[mid, mid]});
+        hi = mid - 1;
+        r.push(9, lo <= hi ? `Search on in slots ${lo+1}–${hi+1} — half the list just disappeared.`
+                           : `Nothing left to search.`, {range:[lo, hi]});
+      }
+    }
+    r.push(10, `lo has passed hi, so there is nowhere left to look: ${target} is not in this list. That took only ${r.tally.comparisons} comparison${r.tally.comparisons===1?'':'s'}.`,
+      {range:[lo, hi]});
+    return r.frames;
+  }
+}
+];
+
+/* Both quicksorts share one implementation; `rand` shifts the pseudocode
+   line numbers by two, because of the extra random-pivot lines. */
+function quickRun(input, rand){
+  const r = recorder(input), a = r.a, n = a.length;
+  const L = rand ? 2 : 0;          // line offset inside partition()
+  r.push(0, rand
+    ? 'Same as quicksort, but each pivot is chosen at random.'
+    : 'We split the list around a pivot value, again and again.');
+  function qs(lo, hi){
+    if (lo > hi) return;
+    if (lo === hi){
+      r.sorted.add(lo);
+      r.push(1, `Slot ${lo+1} holds a single value, so ${a[lo]} is already in place.`, {range:[lo, hi]});
+      return;
+    }
+    r.push(2, `Now sort slots ${lo+1}–${hi+1}.`, {range:[lo, hi]});
+    if (rand){
+      const k = lo + Math.floor(Math.random() * (hi - lo + 1));
+      r.push(7, `Pick a pivot at random: slot ${k+1}, holding ${a[k]}.`, {range:[lo, hi], pivot:k});
+      if (k !== hi){
+        const t = a[k]; a[k] = a[hi]; a[hi] = t; r.tally.moves++;
+        r.push(8, `Swap it to the end so the rest of the code works unchanged.`, {range:[lo, hi], swap:[k, hi]});
+      }
+    }
+    const pivot = a[hi];
+    r.push(7 + L, rand ? `The pivot is ${pivot}.` : `Use the last value, ${pivot}, as the pivot.`,
+      {range:[lo, hi], pivot:hi});
+    let i = lo;
+    for (let j = lo; j < hi; j++){
+      r.tally.comparisons++;
+      r.push(10 + L, `Is ${a[j]} smaller than the pivot ${pivot}?`, {range:[lo, hi], pivot:hi, cmp:[j, hi]});
+      if (a[j] < pivot){
+        if (i !== j){
+          const t = a[i]; a[i] = a[j]; a[j] = t; r.tally.moves++;
+          r.push(11 + L, `Yes — swap it into the "smaller" group on the left.`, {range:[lo, hi], pivot:hi, swap:[i, j]});
+        } else {
+          r.push(12 + L, `Yes — and it is already inside the "smaller" group.`, {range:[lo, hi], pivot:hi, cmp:[i, j]});
+        }
+        i++;
+      } else {
+        r.push(10 + L, `No — leave it where it is, in the "bigger" group.`, {range:[lo, hi], pivot:hi, cmp:[j, hi]});
+      }
+    }
+    const t = a[i]; a[i] = a[hi]; a[hi] = t; r.tally.moves++;
+    r.sorted.add(i);
+    r.push(13 + L, `Swap the pivot ${pivot} into the gap between the two groups — it is now in its final place.`,
+      {range:[lo, hi], swap:[i, hi]});
+    qs(lo, i - 1);
+    qs(i + 1, hi);
+  }
+  qs(0, n - 1);
+  return r.finish();
+}
+
+/* =========================================================================
+   3. UI: array generation, rendering, transport controls
+   ========================================================================= */
+const $ = id => document.getElementById(id);
+
+const state = { algo: ALGOS[0], array: [], frames: [], i: 0, timer: null, target: null };
+
+/* ---- array generation ---------------------------------------------------- */
+function makeArray(size, preset){
+  let a;
+  switch (preset){
+    case 'nearly': {
+      a = Array.from({length:size}, (_, k) => 5 + Math.round(k * 90 / Math.max(1, size - 1)));
+      const swaps = Math.max(1, Math.round(size * 0.15));
+      for (let s = 0; s < swaps; s++){
+        const i = Math.floor(Math.random() * size);
+        const j = Math.min(size - 1, i + 1 + Math.floor(Math.random() * 2));
+        const t = a[i]; a[i] = a[j]; a[j] = t;
+      }
+      break;
+    }
+    case 'reversed':
+      a = Array.from({length:size}, (_, k) => 5 + Math.round((size - 1 - k) * 90 / Math.max(1, size - 1)));
+      break;
+    case 'few': {
+      const pool = [12, 34, 56, 78, 95];
+      a = Array.from({length:size}, () => pool[Math.floor(Math.random() * pool.length)]);
+      break;
+    }
+    default:
+      a = Array.from({length:size}, () => 5 + Math.floor(Math.random() * 95));
+  }
+  return a;
+}
+
+function loadArray(a){
+  state.array = a.slice();
+  state.target = a[Math.floor(Math.random() * a.length)];   // a value that is really there
+  syncTarget();
+  rebuildFrames();
+}
+
+/* Binary search only makes sense on sorted data, so it gets a sorted copy. */
+function rebuildFrames(){
+  pause();
+  const al = state.algo;
+  const input = al.needsSorted ? state.array.slice().sort((x, y) => x - y) : state.array;
+  state.frames = al.run(input, state.target);
+  state.i = 0;
+  $('scrub').max = String(state.frames.length - 1);
+  buildBars();
+  draw();
+}
+
+/* ---- panels -------------------------------------------------------------- */
+function renderNav(){
+  const nav = $('algoNav');
+  nav.innerHTML = '';
+  let group = null;
+  ALGOS.forEach(al => {
+    if (al.group !== group){
+      group = al.group;
+      const h = document.createElement('div');
+      h.className = 'grp';
+      h.textContent = group;
+      nav.appendChild(h);
+    }
+    const b = document.createElement('button');
+    b.innerHTML = `<span>${al.name}</span><span class="big-o">${al.big}</span>`;
+    b.setAttribute('aria-current', String(al.id === state.algo.id));
+    b.onclick = () => { state.algo = al; renderNav(); renderExplain(); renderCode(); syncTarget(); rebuildFrames(); };
+    nav.appendChild(b);
+  });
+}
+
+function renderExplain(){
+  const al = state.algo;
+  $('algoName').textContent = al.name;
+  $('algoBlurb').textContent = al.blurb;
+  $('algoAnalogy').innerHTML = al.analogy;
+  $('algoSteps').innerHTML = al.steps.map(s => `<li>${s}</li>`).join('');
+  $('algoCx').innerHTML = Object.entries(al.cx).map(([k, v]) => {
+    const help = (k === 'Stable' && al.stableWhy)
+      ? `<span class="info" tabindex="0" role="note" aria-label="Why ${v.toLowerCase()}?">i<span class="tip">` +
+        `<span class="lead">Stable = values that compare equal keep the order they started in.</span>` +
+        `${al.stableWhy}</span></span>`
+      : '';
+    return `<tr><td>${k}</td><td>${v}${help}</td></tr>`;
+  }).join('');
+}
+
+/* show the "Find" box only for algorithms that search for something */
+function syncTarget(){
+  const al = state.algo;
+  $('targetField').hidden = !al.needsTarget;
+  if (!al.needsTarget || !state.array.length) return;
+  if (state.target === null) state.target = state.array[Math.floor(Math.random() * state.array.length)];
+  $('targetIn').value = String(state.target);
+}
+
+let codeLineEls = [];
+function renderCode(){
+  const box = $('codeBox');
+  const cs = state.algo.cases || {};
+  const base = new Set(cs.base || []), ind = new Set(cs.ind || []);
+  box.innerHTML = '';
+  codeLineEls = state.algo.code.map((ln, k) => {
+    const d = document.createElement('div');
+    d.className = 'cl' + (base.has(k) ? ' base' : '') + (ind.has(k) ? ' ind' : '');
+    if (base.has(k)) d.title = cs.baseName || 'Base case';
+    if (ind.has(k)) d.title = cs.indName || 'Inductive step';
+    d.innerHTML = ln === '' ? '&nbsp;' : ln;
+    box.appendChild(d);
+    return d;
+  });
+}
+
+/* keep the highlighted pseudocode line in view without scrolling the page */
+function showLine(n){
+  let live = -1;
+  codeLineEls.forEach((el, k) => {
+    const on = (k === n);
+    el.classList.toggle('on', on);
+    if (on) live = k;
+  });
+  $('codeWhere').textContent = live < 0 ? '' : 'line ' + (live + 1);
+  if (live < 0) return;
+  const box = $('codeBox'), el = codeLineEls[live];
+  const top = el.offsetTop, bottom = top + el.offsetHeight;
+  if (top < box.scrollTop) box.scrollTop = top - 8;
+  else if (bottom > box.scrollTop + box.clientHeight) box.scrollTop = bottom - box.clientHeight + 8;
+}
+
+/* ---- bars ---------------------------------------------------------------- */
+let barEls = [];
+function buildBars(){
+  const stage = $('stage');
+  stage.innerHTML = '';
+  barEls = state.array.map(() => {
+    const b = document.createElement('div');
+    b.className = 'bar';
+    const v = document.createElement('span');
+    v.className = 'val';
+    b.appendChild(v);
+    stage.appendChild(b);
+    return b;
+  });
+  stage.style.gap = state.array.length > 40 ? '1px' : '2px';
+}
+
+function draw(){
+  const f = state.frames[state.i];
+  if (!f) return;
+  const max = Math.max.apply(null, f.a);
+  const showVals = f.a.length <= 26;
+  const sorted = new Set(f.sorted);
+
+  for (let k = 0; k < barEls.length; k++){
+    const el = barEls[k];
+    el.style.height = (9 + 89 * f.a[k] / max) + '%';
+    let cls = 'bar';
+    if (f.range && (k < f.range[0] || k > f.range[1]) && !sorted.has(k)) cls += ' dim';
+    if (sorted.has(k)) cls += ' done';
+    else if (f.swap && (k === f.swap[0] || k === f.swap[1])) cls += ' swap';
+    else if (f.write === k) cls += ' write';
+    else if (f.pivot === k) cls += ' pivot';
+    else if (f.cmp && (k === f.cmp[0] || k === f.cmp[1])) cls += ' cmp';
+    el.className = cls;
+    el.firstChild.textContent = showVals ? f.a[k] : '';
+  }
+
+  showLine(f.line);
+  $('note').textContent = f.note;
+  $('stepN').textContent = `${state.i} / ${state.frames.length - 1}`;
+  $('statCmp').textContent = f.comparisons;
+  $('statMov').textContent = f.moves;
+  $('scrub').value = String(state.i);
+  $('prevBtn').disabled = $('firstBtn').disabled = state.i === 0;
+  $('nextBtn').disabled = $('lastBtn').disabled = state.i >= state.frames.length - 1;
+  $('playBtn').textContent = state.timer ? 'Pause' : (state.i >= state.frames.length - 1 ? 'Replay' : 'Play');
+}
+
+/* ---- transport ----------------------------------------------------------- */
+function go(i){
+  state.i = Math.max(0, Math.min(state.frames.length - 1, i));
+  draw();
+}
+function pause(){ if (state.timer){ clearInterval(state.timer); state.timer = null; } }
+function play(){
+  if (state.i >= state.frames.length - 1) state.i = 0;
+  state.timer = setInterval(() => {
+    if (state.i >= state.frames.length - 1){ pause(); draw(); return; }
+    state.i++;
+    draw();
+  }, Number($('speedSel').value));
+  draw();
+}
+function togglePlay(){ state.timer ? (pause(), draw()) : play(); }
+
+/* ---- wiring -------------------------------------------------------------- */
+$('firstBtn').onclick = () => { pause(); go(0); };
+$('prevBtn').onclick  = () => { pause(); go(state.i - 1); };
+$('nextBtn').onclick  = () => { pause(); go(state.i + 1); };
+$('lastBtn').onclick  = () => { pause(); go(state.frames.length - 1); };
+$('playBtn').onclick  = togglePlay;
+$('scrub').oninput    = e => { pause(); go(Number(e.target.value)); };
+$('speedSel').onchange = () => {
+  try { localStorage.setItem('sortviz-speed', $('speedSel').value); } catch (err) {}
+  if (state.timer){ pause(); play(); }   // apply the new speed immediately
+};
+
+$('sizeRange').oninput  = e => { $('sizeOut').textContent = e.target.value; };
+$('sizeRange').onchange = newArray;
+$('presetSel').onchange = newArray;
+$('newBtn').onclick     = newArray;
+function newArray(){ loadArray(makeArray(Number($('sizeRange').value), $('presetSel').value)); }
+
+$('useBtn').onclick = () => {
+  const nums = $('customIn').value.split(/[^0-9.]+/).filter(Boolean).map(Number)
+    .filter(n => !isNaN(n)).map(n => Math.max(1, Math.min(999, Math.round(n)))).slice(0, 60);
+  if (nums.length < 2){ $('customIn').focus(); return; }
+  $('sizeRange').value = String(Math.max(5, Math.min(60, nums.length)));
+  $('sizeOut').textContent = String(nums.length);
+  loadArray(nums);
+};
+$('customIn').onkeydown = e => { if (e.key === 'Enter') $('useBtn').click(); };
+
+$('targetIn').onchange = () => {
+  const v = Math.max(1, Math.min(999, Math.round(Number($('targetIn').value) || 0)));
+  state.target = v;
+  $('targetIn').value = String(v);
+  rebuildFrames();
+};
+$('randTargetBtn').onclick = () => {
+  state.target = state.array[Math.floor(Math.random() * state.array.length)];
+  $('targetIn').value = String(state.target);
+  rebuildFrames();
+};
+
+document.addEventListener('keydown', e => {
+  if (/^(INPUT|SELECT|TEXTAREA)$/.test(e.target.tagName)) return;
+  if (e.key === 'ArrowRight'){ e.preventDefault(); pause(); go(state.i + 1); }
+  else if (e.key === 'ArrowLeft'){ e.preventDefault(); pause(); go(state.i - 1); }
+  else if (e.key === ' '){ e.preventDefault(); togglePlay(); }
+});
+
+/* ---- theme --------------------------------------------------------------- */
+const themeBtn = $('themeBtn');
+function applyTheme(t){
+  document.documentElement.setAttribute('data-theme', t);
+  themeBtn.textContent = t === 'dark' ? 'Light' : 'Dark';
+  try { localStorage.setItem('sortviz-theme', t); } catch (err) {}
+}
+themeBtn.onclick = () => {
+  applyTheme(document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
+};
+try {
+  const saved = localStorage.getItem('sortviz-theme');
+  applyTheme(saved || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'));
+  const sp = localStorage.getItem('sortviz-speed');
+  if (sp && [...$('speedSel').options].some(o => o.value === sp)) $('speedSel').value = sp;
+} catch (err) { applyTheme('light'); }
+
+/* ---- go ------------------------------------------------------------------ */
+renderNav();
+renderExplain();
+renderCode();
+newArray();
+syncTarget();
+</script>
+</body>
+</html>
