@@ -1,0 +1,474 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Heap Lab</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=IBM+Plex+Sans:wght@400;500&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+:root{
+  --ground:#F2F3EF; --surface:#FBFBF8; --ink:#1B2220; --muted:#5B6662; --line:#D6DAD3;
+  --min:#0E7C6B; --min-soft:#DDF0EB; --max:#8E3B72; --max-soft:#F4E3EE;
+  --cmp:#E3A812; --cmp-soft:#FCF0CF; --danger:#B3261E;
+  --node-text:#1B2220;
+  --code-bg:#F5F6F2; --kw:#8E3B72; --num:#0E7C6B; --hl:#FCF0CF;
+  --display:"Bricolage Grotesque",ui-sans-serif,system-ui,sans-serif;
+  --body:"IBM Plex Sans",ui-sans-serif,system-ui,sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --ground:#121614; --surface:#1A201D; --ink:#E4E9E5; --muted:#9AA6A0; --line:#2E3733;
+    --min:#3DC2A8; --min-soft:#12352E; --max:#D57AB6; --max-soft:#3A1C30;
+    --cmp:#F2C14B; --cmp-soft:#3D3212; --danger:#F08A82; --node-text:#E4E9E5;
+    --code-bg:#151A18; --kw:#D57AB6; --num:#3DC2A8; --hl:#3D3212;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --ground:#121614; --surface:#1A201D; --ink:#E4E9E5; --muted:#9AA6A0; --line:#2E3733;
+  --min:#3DC2A8; --min-soft:#12352E; --max:#D57AB6; --max-soft:#3A1C30;
+  --cmp:#F2C14B; --cmp-soft:#3D3212; --danger:#F08A82; --node-text:#E4E9E5;
+  --code-bg:#151A18; --kw:#D57AB6; --num:#3DC2A8; --hl:#3D3212;
+}
+*{box-sizing:border-box}
+body{background:var(--ground);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.6;padding-inline:16px;padding-block:28px 48px}
+.wrap{max-width:1320px;margin:0 auto;display:flex;flex-direction:column;gap:24px}
+header{display:flex;flex-direction:column;gap:6px;max-width:72ch}
+h1{font-family:var(--display);font-weight:700;font-size:clamp(28px,4vw,40px);line-height:1.1;margin:0;text-wrap:balance;letter-spacing:-0.01em}
+h2{font-family:var(--display);font-weight:700;font-size:22px;margin:0;line-height:1.2}
+p{margin:0}
+.lede{color:var(--muted)}
+.toolbar{display:flex;flex-wrap:wrap;align-items:center;gap:10px 16px;padding:12px 14px;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+.toolbar .lbl{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.grp{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+input[type=number]{width:72px;height:36px;border:1px solid var(--line);border-radius:8px;background:var(--ground);color:var(--ink);font:500 15px var(--mono);padding:0 8px}
+input[type=range]{accent-color:var(--ink);width:120px}
+button{height:36px;padding:0 14px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font:500 14px var(--body);cursor:pointer}
+button:hover{border-color:var(--muted)}
+button:focus-visible,input:focus-visible{outline:2px solid var(--cmp);outline-offset:2px}
+button.primary{background:var(--k);border-color:var(--k);color:var(--surface)}
+button.primary:hover{filter:brightness(1.08)}
+.panels{display:flex;flex-direction:column;gap:24px}
+.panel{--k:var(--min);--k-soft:var(--min-soft);background:var(--surface);border:1px solid var(--line);border-top:4px solid var(--k);border-radius:0 0 12px 12px;padding:18px;display:grid;grid-template-columns:minmax(0,1fr);gap:20px;min-width:0}
+.panel.max{--k:var(--max);--k-soft:var(--max-soft)}
+@media (min-width:1000px){.panel{grid-template-columns:minmax(0,1.05fr) minmax(0,1fr)}}
+.vis{display:flex;flex-direction:column;gap:14px;min-width:0}
+.phead{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:6px 12px}
+.rule{font:500 13px var(--mono);background:var(--k-soft);color:var(--k);padding:3px 10px;border-radius:999px}
+.root-out{display:flex;gap:16px;flex-wrap:wrap;font-size:13px;color:var(--muted)}
+.root-out b{font:600 18px var(--mono);color:var(--k);margin-left:6px}
+.stage{overflow-x:auto}
+svg{display:block;width:100%;min-width:320px;height:auto}
+.edge{stroke:var(--line);stroke-width:1.5}
+.nd{transition:transform var(--dur,450ms) cubic-bezier(.4,.1,.2,1)}
+.nd circle,.cell rect{fill:var(--surface);stroke:var(--k);stroke-width:1.5;transition:fill .2s,stroke .2s}
+.nd text,.cell text{fill:var(--node-text);font:600 14px var(--mono);text-anchor:middle;dominant-baseline:central}
+.nd.top circle,.cell.top rect{fill:var(--k-soft)}
+.nd.cmp circle,.cell.cmp rect{fill:var(--cmp-soft);stroke:var(--cmp);stroke-width:2.5}
+.nd.gone{opacity:0;transition:opacity .3s}
+.cell{transition:transform var(--dur,450ms) cubic-bezier(.4,.1,.2,1)}
+.idx{fill:var(--muted);font:400 11px var(--mono);text-anchor:middle}
+.arr-lbl{fill:var(--muted);font:400 11px var(--body);letter-spacing:.06em;text-transform:uppercase}
+.empty{fill:var(--muted);font:400 14px var(--body);text-anchor:middle}
+.err{min-height:20px;font-size:13px;color:var(--danger)}
+.log{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:4px;font-size:14px;min-height:120px}
+.log li{color:var(--muted);padding-left:12px;border-left:2px solid var(--line)}
+.log li:first-child{color:var(--ink);border-left-color:var(--cmp)}
+.log code{font:500 13px var(--mono);color:var(--ink)}
+.codecol{display:flex;flex-direction:column;gap:10px;min-width:0}
+.codehead{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap}
+.codehead .lbl{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.codehead .fn{font:500 13px var(--mono);color:var(--k)}
+.code{background:var(--code-bg);border:1px solid var(--line);border-radius:10px;padding:10px 0;overflow-x:auto;font:400 12.5px/1.65 var(--mono)}
+.ln{display:grid;grid-template-columns:3.2em max-content;white-space:pre;padding-right:14px;border-left:3px solid transparent;transition:background .15s}
+.ln .no{color:var(--muted);text-align:right;padding-right:1em;user-select:none;opacity:.7}
+.ln.on{background:var(--hl);border-left-color:var(--cmp)}
+.ln.on .no{color:var(--ink);opacity:1}
+.ln.dim{opacity:.45}
+.kw{color:var(--kw);font-weight:600}
+.nm{color:var(--num)}
+.cm{color:var(--muted);font-style:italic}
+.vars{display:flex;flex-wrap:wrap;gap:8px;min-height:30px}
+.var{font:500 13px var(--mono);border:1px solid var(--line);border-radius:6px;padding:3px 9px;background:var(--code-bg)}
+.var span{color:var(--muted)}
+.vars .none{font-size:13px;color:var(--muted)}
+.legend{display:flex;flex-wrap:wrap;gap:14px;font-size:13px;color:var(--muted)}
+.sw{display:inline-block;width:12px;height:12px;border-radius:50%;vertical-align:-1px;margin-right:6px;border:2px solid var(--muted)}
+.sw.c{background:var(--cmp-soft);border-color:var(--cmp)}
+.sw.r{background:var(--min-soft);border-color:var(--min)}
+.sw.r2{background:var(--max-soft);border-color:var(--max);margin-left:-4px}
+.sw.l{border-radius:2px;background:var(--hl);border-color:var(--cmp)}
+.notes{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:20px;font-size:14px;color:var(--muted)}
+.notes h3{font:500 12px var(--body);letter-spacing:.06em;text-transform:uppercase;color:var(--ink);margin:0 0 4px}
+.notes code{font:500 13px var(--mono);color:var(--ink)}
+@media (prefers-reduced-motion: reduce){.nd,.cell,.ln{transition:none}}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <h1>Heap Lab</h1>
+    <p class="lede">A min-heap keeps the smallest value at the root. A max-heap keeps the largest. Insert and extract values and watch each comparison and swap in the tree, the array, and the exact line of Python running beside it.</p>
+  </header>
+
+  <div class="toolbar">
+    <div class="grp">
+      <span class="lbl">Both heaps</span>
+      <input id="both-val" type="number" min="1" max="99" value="4" aria-label="Value to insert into both heaps">
+      <button id="both-insert">Insert into both</button>
+      <button id="both-extract">Extract both roots</button>
+    </div>
+    <div class="grp">
+      <label class="lbl" for="speed">Speed</label>
+      <input id="speed" type="range" min="1" max="5" step="1" value="2">
+    </div>
+    <div class="legend">
+      <span><i class="sw c"></i>Being compared</span>
+      <span><i class="sw r"></i><i class="sw r2"></i>Root</span>
+      <span><i class="sw l"></i>Line running now</span>
+    </div>
+  </div>
+  <div class="err" id="both-err" role="alert"></div>
+
+  <div class="panels">
+    <section class="panel min" id="p-min"></section>
+    <section class="panel max" id="p-max"></section>
+  </div>
+
+  <div class="notes">
+    <div><h3>Shape rule</h3><p>Both heaps are complete binary trees stored as a plain array. For index <code>i</code>, the children sit at <code>2i+1</code> and <code>2i+2</code>, and the parent at <code>(i−1)//2</code>.</p></div>
+    <div><h3>Insert</h3><p>The new value goes into the next free slot, the end of the array. It then swaps with its parent until the heap rule holds again.</p></div>
+    <div><h3>Extract</h3><p>The root is removed and the last value moves into its place. That value sinks, swapping with the child that should be on top, until both children fit the rule.</p></div>
+    <div><h3>Min vs max in code</h3><p>The two classes are identical except for three comparison signs and the variable names. Compare the highlighted <code>if</code> lines in each panel.</p></div>
+  </div>
+</div>
+
+<script>
+const MAX_ITEMS = 15;
+const W = 600, H = 330, R = 17;
+let uid = 0;
+const speedEl = document.getElementById('speed');
+const stepMs = () => [1500, 1050, 700, 420, 220][speedEl.value - 1];
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const NS = 'http://www.w3.org/2000/svg';
+const mk = (tag, attrs = {}) => { const e = document.createElementNS(NS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); return e; };
+const esc = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+function nodePos(i) {
+  const d = Math.floor(Math.log2(i + 1)), k = i - (2 ** d - 1), n = 2 ** d;
+  return [(k + 0.5) * W / n, 32 + d * 62];
+}
+
+function pyLines(isMin) {
+  const cls = isMin ? 'MinHeap' : 'MaxHeap';
+  const op = isMin ? '<' : '>', stop = isMin ? '<=' : '>=';
+  const best = isMin ? 'smallest' : 'largest';
+  return [
+    ['', `class ${cls}:`],
+    ['', `    def push(self, value):`],
+    ['A1', `        self.items.append(value)`],
+    ['A2', `        self._sift_up(len(self.items) - 1)`],
+    ['', ``],
+    ['', `    def _sift_up(self, i):`],
+    ['U1', `        while i > 0:`],
+    ['U2', `            p = (i - 1) // 2`],
+    ['U3', `            if self.items[p] ${stop} self.items[i]:`],
+    ['U4', `                break`],
+    ['U5', `            self.items[p], self.items[i] = self.items[i], self.items[p]`],
+    ['U6', `            i = p`],
+    ['', ``],
+    ['', `    def pop(self):`],
+    ['P1', `        ${best} = self.items[0]`],
+    ['P2', `        last = self.items.pop()`],
+    ['P3', `        if self.items:`],
+    ['P4', `            self.items[0] = last`],
+    ['P5', `            self._sift_down(0)`],
+    ['P6', `        return ${best}`],
+    ['', ``],
+    ['', `    def _sift_down(self, i):`],
+    ['D0', `        n = len(self.items)`],
+    ['D1', `        while True:`],
+    ['D2', `            left, right = 2 * i + 1, 2 * i + 2`],
+    ['D3', `            ${best} = i`],
+    ['D4', `            if left < n and self.items[left] ${op} self.items[${best}]:`],
+    ['D5', `                ${best} = left`],
+    ['D6', `            if right < n and self.items[right] ${op} self.items[${best}]:`],
+    ['D7', `                ${best} = right`],
+    ['D8', `            if ${best} == i:`],
+    ['D9', `                break`],
+    ['D10', `            self.items[i], self.items[${best}] = self.items[${best}], self.items[i]`],
+    ['D11', `            i = ${best}`],
+  ];
+}
+
+function colorize(src) {
+  return esc(src)
+    .replace(/\b(class|def|while|if|and|return|break|True)\b/g, '<span class="kw">$1</span>')
+    .replace(/\b(\d+)\b/g, '<span class="nm">$1</span>');
+}
+
+function makeHeap(root, kind, initial) {
+  const isMin = kind === 'min';
+  const better = (a, b) => isMin ? a < b : a > b;
+  const sym = isMin ? '≤' : '≥';
+  const word = isMin ? 'smaller' : 'larger';
+  const bestName = isMin ? 'smallest' : 'largest';
+  let items = [], busy = false;
+
+  const lines = pyLines(isMin);
+  const codeHtml = lines.map(([id, t], n) =>
+    `<div class="ln" data-id="${id}"><span class="no">${n + 1}</span><span>${colorize(t) || ' '}</span></div>`).join('');
+
+  root.innerHTML = `
+    <div class="vis">
+      <div class="phead"><h2>${isMin ? 'Min-heap' : 'Max-heap'}</h2><span class="rule">parent ${sym} children</span></div>
+      <div class="root-out"><span>Root (${isMin ? 'smallest' : 'largest'})<b data-r="root">–</b></span><span>Last extracted<b data-r="last">–</b></span><span>Size<b data-r="size">0</b></span></div>
+      <div class="grp">
+        <input id="${kind}-val" type="number" min="1" max="99" placeholder="${isMin ? '4' : '6'}" aria-label="Value to insert into the ${kind}-heap">
+        <button class="primary" data-a="insert">Insert</button>
+        <button data-a="random">Insert random</button>
+        <button data-a="extract">Extract ${isMin ? 'min' : 'max'}</button>
+        <button data-a="reset">Reset</button>
+      </div>
+      <div class="err" role="alert"></div>
+      <div class="stage"><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${kind}-heap tree and array"></svg></div>
+      <ol class="log" aria-live="polite"></ol>
+    </div>
+    <div class="codecol">
+      <div class="codehead"><span class="lbl">Python</span><span class="fn" data-r="fn">idle</span></div>
+      <div class="code" role="region" aria-label="${kind}-heap Python code">${codeHtml}</div>
+      <div class="vars" aria-label="Current variable values"><span class="none">Variables appear here while an operation runs.</span></div>
+    </div>`;
+
+  const svg = root.querySelector('svg');
+  const gEdges = mk('g'), gNodes = mk('g'), gCells = mk('g'), gIdx = mk('g');
+  const arrLbl = mk('text', { class: 'arr-lbl', x: 0, y: 262 }); arrLbl.textContent = 'Array';
+  const emptyTxt = mk('text', { class: 'empty', x: W / 2, y: 130 }); emptyTxt.textContent = 'Heap is empty. Insert a value.';
+  svg.append(gEdges, gNodes, arrLbl, gCells, gIdx, emptyTxt);
+  const errEl = root.querySelector('.err'), logEl = root.querySelector('.log'), inp = root.querySelector('input');
+  const varsEl = root.querySelector('.vars');
+  const lnEls = [...root.querySelectorAll('.ln')];
+  const out = k => root.querySelector(`[data-r="${k}"]`);
+  const nodeEls = new Map(), cellEls = new Map();
+
+  function hl(ids, vars, fn) {
+    lnEls.forEach(el => el.classList.toggle('on', ids.includes(el.dataset.id)));
+    if (fn !== undefined) out('fn').textContent = fn;
+    if (vars) {
+      const entries = Object.entries(vars);
+      varsEl.innerHTML = entries.length
+        ? entries.map(([k, v]) => `<span class="var"><span>${k} =</span> ${esc(String(v))}</span>`).join('')
+        : '<span class="none">Variables appear here while an operation runs.</span>';
+    }
+  }
+  const arrStr = () => '[' + items.map(it => it.v).join(', ') + ']';
+
+  function log(html) {
+    const li = document.createElement('li'); li.innerHTML = html;
+    logEl.prepend(li);
+    while (logEl.children.length > 6) logEl.lastChild.remove();
+  }
+  function setErr(t) { errEl.textContent = t; }
+
+  function render(cmp = []) {
+    document.documentElement.style.setProperty('--dur', Math.round(stepMs() * 0.55) + 'ms');
+    gEdges.replaceChildren();
+    for (let i = 1; i < items.length; i++) {
+      const [x1, y1] = nodePos((i - 1) >> 1), [x2, y2] = nodePos(i);
+      gEdges.append(mk('line', { class: 'edge', x1, y1, x2, y2 }));
+    }
+    const cw = 38, start = (W - items.length * cw) / 2;
+    const live = new Set(items.map(it => it.id));
+    for (const [id, el] of nodeEls) if (!live.has(id)) { el.classList.add('gone'); setTimeout(() => el.remove(), 320); nodeEls.delete(id); }
+    for (const [id, el] of cellEls) if (!live.has(id)) { el.remove(); cellEls.delete(id); }
+    items.forEach((it, i) => {
+      let g = nodeEls.get(it.id);
+      const [x, y] = nodePos(i);
+      if (!g) {
+        g = mk('g', { class: 'nd' });
+        g.append(mk('circle', { r: R }), mk('text'));
+        g.lastChild.textContent = it.v;
+        g.style.transition = 'none';
+        g.style.transform = `translate(${x}px,${y}px)`;
+        gNodes.append(g); nodeEls.set(it.id, g);
+        g.getBoundingClientRect(); g.style.transition = '';
+      }
+      g.style.transform = `translate(${x}px,${y}px)`;
+      g.classList.toggle('cmp', cmp.includes(i));
+      g.classList.toggle('top', i === 0);
+      let c = cellEls.get(it.id);
+      const cx = start + i * cw;
+      if (!c) {
+        c = mk('g', { class: 'cell' });
+        c.append(mk('rect', { x: 1, y: 0, width: cw - 2, height: 34, rx: 5 }), mk('text', { x: cw / 2, y: 17 }));
+        c.lastChild.textContent = it.v;
+        c.style.transition = 'none';
+        c.style.transform = `translate(${cx}px,272px)`;
+        gCells.append(c); cellEls.set(it.id, c);
+        c.getBoundingClientRect(); c.style.transition = '';
+      }
+      c.style.transform = `translate(${cx}px,272px)`;
+      c.classList.toggle('cmp', cmp.includes(i));
+      c.classList.toggle('top', i === 0);
+    });
+    gIdx.replaceChildren();
+    items.forEach((_, i) => { const t = mk('text', { class: 'idx', x: start + i * cw + cw / 2, y: 322 }); t.textContent = i; gIdx.append(t); });
+    arrLbl.setAttribute('x', Math.max(0, start - 50));
+    arrLbl.style.display = items.length ? '' : 'none';
+    emptyTxt.style.display = items.length ? 'none' : '';
+    out('root').textContent = items.length ? items[0].v : '–';
+    out('size').textContent = items.length;
+  }
+
+  const code = v => `<code>${v}</code>`;
+  const S = () => sleep(stepMs());
+
+  async function insert(v) {
+    if (busy) return;
+    if (items.length >= MAX_ITEMS) { setErr(`This demo holds ${MAX_ITEMS} values. Extract one first.`); return; }
+    setErr(''); busy = true;
+    items.push({ id: ++uid, v });
+    let i = items.length - 1;
+    hl(['A1'], { value: v, items: arrStr() }, 'push(' + v + ')');
+    log(`Insert ${code(v)} at the end of the array, index ${code(i)}.`);
+    render([i]); await S();
+    hl(['A2'], { value: v, 'len(self.items) - 1': i });
+    await S();
+    while (true) {
+      hl(['U1'], { i, 'i > 0': i > 0 }, `_sift_up(${i})`);
+      await sleep(stepMs() * 0.6);
+      if (i === 0) { log(`${code(items[0].v)} reached the root.`); break; }
+      const p = (i - 1) >> 1;
+      hl(['U2'], { i, p });
+      render([i, p]); await sleep(stepMs() * 0.7);
+      const holds = !better(items[i].v, items[p].v);
+      hl(['U3'], { i, p, 'self.items[p]': items[p].v, 'self.items[i]': items[i].v, result: holds });
+      await S();
+      if (holds) {
+        hl(['U4'], { i, p });
+        log(`Parent ${code(items[p].v)} ${sym} ${code(items[i].v)}. The rule holds, so it stops here.`);
+        await S(); break;
+      }
+      log(`${code(items[i].v)} is ${word} than its parent ${code(items[p].v)}. Swap.`);
+      hl(['U5'], { i, p });
+      [items[p], items[i]] = [items[i], items[p]];
+      render([p]); await S();
+      i = p;
+      hl(['U6'], { i, items: arrStr() });
+      await sleep(stepMs() * 0.6);
+    }
+    render(); hl([], {}, 'idle'); busy = false;
+  }
+
+  async function extract() {
+    if (busy) return;
+    if (!items.length) { setErr('The heap is empty. Insert a value first.'); return; }
+    setErr(''); busy = true;
+    const top = items[0];
+    hl(['P1'], { [bestName]: top.v, items: arrStr() }, 'pop()');
+    render([0]); log(`Remove the root ${code(top.v)}, the ${isMin ? 'smallest' : 'largest'} value.`);
+    await S();
+    const last = items.pop();
+    render(items.length ? [] : []);
+    hl(['P2'], { [bestName]: top.v, last: last.v, items: arrStr() });
+    out('last').textContent = top.v;
+    await S();
+    hl(['P3'], { 'bool(self.items)': items.length > 0 });
+    await sleep(stepMs() * 0.7);
+    if (items.length) {
+      items[0] = last;
+      hl(['P4'], { last: last.v, items: arrStr() });
+      log(`Move the last value ${code(last.v)} into the root.`);
+      render([0]); await S();
+      hl(['P5'], {});
+      await sleep(stepMs() * 0.6);
+      const n = items.length;
+      hl(['D0'], { n }, '_sift_down(0)');
+      await sleep(stepMs() * 0.6);
+      let i = 0;
+      while (true) {
+        const l = 2 * i + 1, r = l + 1;
+        const kids = [l, r].filter(k => k < n);
+        hl(['D1', 'D2', 'D3'], { i, left: l, right: r, [bestName]: i });
+        render([i, ...kids]); await S();
+        let b = i;
+        const ids = ['D4'];
+        if (l < n && better(items[l].v, items[b].v)) { b = l; ids.push('D5'); }
+        hl(ids, { i, left: l, right: r, [bestName]: b });
+        await sleep(stepMs() * 0.8);
+        const ids2 = ['D6'];
+        if (r < n && better(items[r].v, items[b].v)) { b = r; ids2.push('D7'); }
+        hl(ids2, { i, left: l, right: r, [bestName]: b });
+        await sleep(stepMs() * 0.8);
+        if (b === i) {
+          hl(['D8', 'D9'], { i, [bestName]: b });
+          log(kids.length ? `${code(items[i].v)} ${sym} its children. The rule holds, so it stops here.` : `${code(items[i].v)} has no children left. Done.`);
+          await S(); break;
+        }
+        hl(['D8'], { i, [bestName]: b, [`${bestName} == i`]: false });
+        render([i, b]);
+        log(`${code(items[b].v)} is the ${word} child and beats ${code(items[i].v)}. Swap.`);
+        await sleep(stepMs() * 0.7);
+        [items[i], items[b]] = [items[b], items[i]];
+        hl(['D10'], { i, [bestName]: b });
+        render([b]); await S();
+        i = b;
+        hl(['D11'], { i, items: arrStr() });
+        await sleep(stepMs() * 0.6);
+      }
+    } else log('That was the last value. The heap is now empty.');
+    hl(['P6'], { returns: top.v }, 'pop()');
+    render(); await S();
+    hl([], {}, 'idle'); busy = false;
+  }
+
+  function reset() {
+    if (busy) return;
+    items = initial.map(v => ({ id: ++uid, v }));
+    setErr(''); out('last').textContent = '–';
+    logEl.replaceChildren();
+    render(); hl([], {}, 'idle');
+    log(`Loaded the example heap ${code('[' + initial.join(', ') + ']')}.`);
+  }
+
+  function readInput() {
+    const v = parseInt(inp.value, 10);
+    if (isNaN(v) || v < 1 || v > 99) { setErr('Enter a whole number from 1 to 99.'); inp.focus(); return null; }
+    inp.value = ''; return v;
+  }
+
+  root.addEventListener('click', e => {
+    const a = e.target.closest('button')?.dataset.a; if (!a) return;
+    if (a === 'insert') { const v = readInput(); if (v !== null) insert(v); }
+    if (a === 'random') insert(1 + Math.floor(Math.random() * 99));
+    if (a === 'extract') extract();
+    if (a === 'reset') reset();
+  });
+  inp.addEventListener('input', () => setErr(''));
+  inp.addEventListener('keydown', e => { if (e.key === 'Enter') { const v = readInput(); if (v !== null) insert(v); } });
+
+  reset();
+  return { insert, extract };
+}
+
+const minH = makeHeap(document.getElementById('p-min'), 'min', [1, 3, 2, 7, 8, 5, 9]);
+const maxH = makeHeap(document.getElementById('p-max'), 'max', [9, 8, 5, 7, 3, 1, 2]);
+
+const bothVal = document.getElementById('both-val'), bothErr = document.getElementById('both-err');
+bothVal.addEventListener('input', () => bothErr.textContent = '');
+document.getElementById('both-insert').addEventListener('click', () => {
+  const v = parseInt(bothVal.value, 10);
+  if (isNaN(v) || v < 1 || v > 99) { bothErr.textContent = 'Enter a whole number from 1 to 99.'; bothVal.focus(); return; }
+  bothErr.textContent = '';
+  minH.insert(v); maxH.insert(v);
+});
+document.getElementById('both-extract').addEventListener('click', () => { bothErr.textContent = ''; minH.extract(); maxH.extract(); });
+speedEl.addEventListener('input', () => document.documentElement.style.setProperty('--dur', Math.round(stepMs() * 0.55) + 'ms'));
+</script>
+</body>
+</html>
